@@ -102,9 +102,9 @@ if uploaded_file is not None:
     st.subheader("📊 Dataset Preview")
 
     st.dataframe(
-        df,
-        use_container_width=True,
-        height=400
+    df,
+    width="stretch",
+    height=400
     )
 
     st.divider()
@@ -120,13 +120,20 @@ if uploaded_file is not None:
         "AI will generate DuckDB SQL and execute it safely."
     )
 
-    # Create schema information for AI
+    # --------------------------------------------------
+    # CREATE DATABASE SCHEMA FOR AI
+    # --------------------------------------------------
+
     schema = "\n".join(
         [
             f"{column}: {dtype}"
             for column, dtype in df.dtypes.items()
         ]
     )
+
+    # --------------------------------------------------
+    # QUESTION INPUT
+    # --------------------------------------------------
 
     question = st.text_input(
         "💬 Ask a question",
@@ -137,6 +144,10 @@ if uploaded_file is not None:
         "✨ Ask AI",
         type="primary"
     )
+
+    # --------------------------------------------------
+    # AI QUERY
+    # --------------------------------------------------
 
     if ask_ai:
 
@@ -151,7 +162,7 @@ if uploaded_file is not None:
             try:
 
                 # --------------------------------------------------
-                # GENERATE SQL USING GEMINI
+                # GENERATE SQL
                 # --------------------------------------------------
 
                 with st.spinner(
@@ -220,15 +231,82 @@ if uploaded_file is not None:
                     )
 
                     # --------------------------------------------------
-                    # DISPLAY RESULT
+                    # DISPLAY RESULTS
                     # --------------------------------------------------
 
                     st.markdown("### 📈 Results")
 
                     st.dataframe(
                         result,
-                        use_container_width=True
+                        width="stretch"
                     )
+
+                    # --------------------------------------------------
+                    # AUTOMATIC VISUALIZATION
+                    # --------------------------------------------------
+
+                    st.markdown(
+                        "### 📊 Automatic Visualization"
+                    )
+
+                    # Check that result has enough columns
+                    if len(result.columns) >= 2:
+
+                        # Find numeric columns
+                        numeric_columns = result.select_dtypes(
+                            include="number"
+                        ).columns.tolist()
+
+                        if numeric_columns:
+
+                            # Find non-numeric/category columns
+                            category_columns = [
+                                column
+                                for column in result.columns
+                                if column not in numeric_columns
+                            ]
+
+                            if category_columns:
+
+                                category_column = category_columns[0]
+
+                                value_column = numeric_columns[0]
+
+                                # Prepare chart data
+                                chart_data = result[
+                                    [
+                                        category_column,
+                                        value_column
+                                    ]
+                                ].copy()
+
+                                # Convert category to index
+                                chart_data = chart_data.set_index(
+                                    category_column
+                                )
+
+                                # Display chart
+                                st.bar_chart(
+                                    chart_data
+                                )
+
+                            else:
+
+                                st.info(
+                                    "ℹ️ No category column available for a chart."
+                                )
+
+                        else:
+
+                            st.info(
+                                "ℹ️ No numeric column available for visualization."
+                            )
+
+                    else:
+
+                        st.info(
+                            "ℹ️ The result does not contain enough columns for visualization."
+                        )
 
             except Exception as error:
 
@@ -262,6 +340,10 @@ ORDER BY Total_Sales DESC""",
     run_query = st.button(
         "▶️ Run SQL Query"
     )
+
+    # --------------------------------------------------
+    # RUN MANUAL SQL
+    # --------------------------------------------------
 
     if run_query:
 

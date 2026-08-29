@@ -18,7 +18,7 @@ client = OpenAI(
 )
 
 
-MODEL = "gemini-3.7-flash"
+MODEL = "gemini-3.5-flash"
 
 
 def generate_sql(question, schema):
